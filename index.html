@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LocalDrop Mobile</title>
+    <title>LocalDrop | Fast File Sharing</title>
     <style>
         :root {
             --bg: #0f172a;
             --card: #1e293b;
             --primary: #3b82f6;
+            --success: #10b981;
             --text: #f8fafc;
         }
         body { 
-            font-family: sans-serif; 
+            font-family: 'Inter', sans-serif; 
             background: var(--bg); 
             color: var(--text); 
             margin: 0; 
@@ -23,135 +24,134 @@
         }
         .container {
             background: var(--card);
-            padding: 20px;
-            border-radius: 15px;
+            padding: 2rem;
+            border-radius: 1rem;
             width: 100%;
-            max-width: 400px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            max-width: 450px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: center;
         }
-        input, button {
+        .download-section {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #334155;
+        }
+        .btn {
+            display: block;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .win { background: var(--primary); color: white; }
+        .mac { background: #e2e8f0; color: #0f172a; }
+        .linux { background: #334155; color: white; }
+        
+        input[type="text"] {
             width: 100%;
             padding: 12px;
-            margin: 10px 0;
-            border-radius: 8px;
+            background: #0f172a;
             border: 1px solid #334155;
-            box-sizing: border-box;
-        }
-        input { background: #0f172a; color: white; }
-        button { 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            font-weight: bold; 
-            cursor: pointer;
-        }
-        #status {
-            font-size: 0.9rem;
-            margin: 10px 0;
-            color: #94a3b8;
-        }
-        .file-label {
-            display: block;
-            background: #334155;
-            padding: 15px;
+            color: white;
             border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            border: 2px dashed #475569;
+            margin: 10px 0;
         }
-        input[type="file"] { display: none; }
+        .file-box {
+            border: 2px dashed #475569;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            cursor: pointer;
+        }
+        #send-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 15px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        #status { font-size: 0.85rem; color: #94a3b8; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>LocalDrop Mobile</h2>
-        
-        <p id="status">Status: Disconnected</p>
+        <div class="download-section">
+            <h2>Get the Desktop App</h2>
+            <a href="https://github.com/devtphbs/localdrop-pc/releases/download/v1.1.5/LocalDrop-Setup-1.1.5.exe" class="btn win">Download for Windows (.exe)</a>
+            <a href="https://github.com/devtphbs/localdrop-pc/releases/download/v1.1.5/LocalDrop-1.1.5-arm64.dmg" class="btn mac">Download for Mac (.dmg)</a>
+            <a href="https://github.com/devtphbs/localdrop-pc/releases/download/v1.1.5/LocalDrop-1.1.5.AppImage" class="btn linux">Download for Linux (.AppImage)</a>
+        </div>
+
+        <h2>Send Files to PC</h2>
+        <p id="status">Status: Not Connected</p>
         
         <input type="text" id="pcID" placeholder="Enter PC ID (e.g. localdrop-pc-1234)">
-        <button onclick="connectToPC()">Connect to PC</button>
+        <button class="btn win" style="width:100%; border:none; cursor:pointer;" onclick="connectToPC()">Connect to PC</button>
 
-        <hr style="border: 0.5px solid #334155; margin: 20px 0;">
-
-        <label class="file-label" for="fileInput" id="fileLabel">
-            Click to Select File
-        </label>
-        <input type="file" id="fileInput" onchange="updateLabel()">
+        <div class="file-box" onclick="document.getElementById('fileInput').click()">
+            <span id="file-name">Tap to select a file</span>
+            <input type="file" id="fileInput" hidden onchange="showFileName()">
+        </div>
         
-        <button onclick="sendFile()" style="background: #10b981; margin-top: 20px;">Send File</button>
+        <button id="send-btn" onclick="sendFile()">Send to Desktop</button>
     </div>
 
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-
     <script>
         let peer = new Peer();
         let conn = null;
 
-        // Update UI when file is chosen
-        function updateLabel() {
-            const input = document.getElementById('fileInput');
-            const label = document.getElementById('fileLabel');
-            if (input.files.length > 0) {
-                label.innerText = "Selected: " + input.files[0].name;
-                label.style.borderColor = "#3b82f6";
-            }
+        function showFileName() {
+            const file = document.getElementById('fileInput').files[0];
+            if (file) document.getElementById('file-name').innerText = "Selected: " + file.name;
         }
 
-        // 1. Connect to the PC
         function connectToPC() {
             const id = document.getElementById('pcID').value;
-            if (!id) return alert("Enter the PC ID first!");
+            if (!id) return alert("Enter PC ID first!");
 
-            document.getElementById('status').innerText = "Status: Connecting...";
+            document.getElementById('status').innerText = "Connecting...";
             conn = peer.connect(id);
 
             conn.on('open', () => {
-                document.getElementById('status').innerText = "Status: Connected to PC ✅";
+                document.getElementById('status').innerText = "Connected to PC ✅";
                 document.getElementById('status').style.color = "#10b981";
             });
 
-            conn.on('close', () => {
-                document.getElementById('status').innerText = "Status: Disconnected ❌";
-                document.getElementById('status').style.color = "#ef4444";
-            });
-
-            conn.on('error', (err) => {
-                alert("Connection failed. Check the ID.");
-                console.error(err);
+            conn.on('error', () => {
+                alert("Connection failed. Is the PC app open?");
             });
         }
 
-        // 2. Send the file
         function sendFile() {
             const fileInput = document.getElementById('fileInput');
             const file = fileInput.files[0];
 
-            if (!conn || !conn.open) {
-                return alert("Connect to the PC first!");
-            }
-            if (!file) {
-                return alert("Please select a file!");
-            }
+            if (!conn || !conn.open) return alert("Connect to PC first!");
+            if (!file) return alert("Select a file!");
 
-            document.getElementById('status').innerText = "Status: Sending...";
+            document.getElementById('status').innerText = "Sending file...";
 
             const reader = new FileReader();
-            reader.onload = function(event) {
-                // We send a structured object so the PC knows exactly what to do
-                const blob = new Uint8Array(event.target.result);
-                
+            reader.onload = function(e) {
+                // Sending as ArrayBuffer (Binary)
                 conn.send({
-                    file: blob,
+                    file: e.target.result,
                     name: file.name,
                     type: file.type,
                     size: file.size
                 });
-
-                alert("File sent! Check your PC.");
-                document.getElementById('status').innerText = "Status: Connected ✅";
+                alert("File sent successfully!");
+                document.getElementById('status').innerText = "Connected ✅";
             };
-
             reader.readAsArrayBuffer(file);
         }
     </script>
