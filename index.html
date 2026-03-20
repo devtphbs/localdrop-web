@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LocalDrop | v1.1.6</title>
+    <title>LocalDrop | Share v1.1.7</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -14,7 +14,7 @@
             --border: #334155;
         }
         body { 
-            font-family: 'Inter', -apple-system, sans-serif; 
+            font-family: 'Inter', sans-serif; 
             background: var(--bg); 
             color: var(--text); 
             margin: 0; 
@@ -22,6 +22,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
         }
         .container {
             background: var(--card);
@@ -33,41 +34,39 @@
             text-align: center;
             border: 1px solid var(--border);
         }
-        .download-box {
+        .download-area {
             margin-bottom: 2rem;
-            padding-bottom: 1.5rem;
+            padding-bottom: 2rem;
             border-bottom: 1px solid var(--border);
         }
         .btn {
             display: block;
-            padding: 14px;
-            margin: 10px 0;
-            border-radius: 10px;
+            padding: 16px;
+            margin: 12px 0;
+            border-radius: 12px;
             text-decoration: none;
-            font-weight: 700;
-            transition: all 0.2s;
-            font-size: 0.95rem;
+            font-weight: 800;
+            transition: 0.2s;
         }
-        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
         .win { background: var(--primary); color: white; }
         .mac { background: #f8fafc; color: #0f172a; }
         .linux { background: #475569; color: white; }
         
         input[type="text"] {
             width: 100%;
-            padding: 14px;
+            padding: 16px;
             background: #0f172a;
-            border: 1px solid var(--border);
+            border: 2px solid var(--border);
             color: white;
-            border-radius: 10px;
-            margin: 10px 0;
+            border-radius: 12px;
+            margin: 15px 0;
             box-sizing: border-box;
             font-family: monospace;
         }
-        .file-drop {
+        .file-zone {
             border: 2px dashed var(--border);
-            padding: 30px;
-            border-radius: 12px;
+            padding: 40px;
+            border-radius: 15px;
             margin: 20px 0;
             cursor: pointer;
         }
@@ -76,81 +75,50 @@
             color: white;
             border: none;
             width: 100%;
-            padding: 16px;
+            padding: 18px;
             font-size: 1.1rem;
             font-weight: 800;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
         }
-        #status { font-size: 0.9rem; color: #94a3b8; margin-top: 10px; }
     </style>
 </head>
 <body>
-
     <div class="container">
-        <div class="download-box">
-            <h1>LocalDrop PC <span style="font-size: 0.8rem; color: #64748b;">v1.1.6</span></h1>
-            <p style="color: #94a3b8; margin-bottom: 20px;">Fast, private file sharing</p>
-            
-            <a href="https://github.com/devtphbs/localdrop-pc/releases/download/v1.1.6/LocalDrop-Setup-1.1.6.exe" class="btn win">Download for Windows (.exe)</a>
-            <a href="https://github.com/devtphbs/localdrop-pc/releases/download/v1.1.6/LocalDrop-1.1.6-arm64.dmg" class="btn mac">Download for Mac (Apple Silicon)</a>
-            <a href="https://github.com/devtphbs/localdrop-pc/releases/download/v1.1.6/LocalDrop-1.1.6.AppImage" class="btn linux">Download for Linux (.AppImage)</a>
+        <div class="download-area">
+            <h1>LocalDrop <span style="font-size: 0.9rem; opacity: 0.6;">v1.1.7</span></h1>
+            <a href="https://github.com/devtphbs/localdrop-pc/releases/download/v1.1.7/LocalDrop-Setup-1.1.7.exe" class="btn win">Download for Windows</a>
+            <a href="https://github.com/devtphbs/localdrop-pc/releases/download/v1.1.7/LocalDrop-1.1.7-arm64.dmg" class="btn mac">Download for Mac</a>
+            <a href="https://github.com/devtphbs/localdrop-pc/releases/download/v1.1.7/LocalDrop-1.1.7.AppImage" class="btn linux">Download for Linux</a>
         </div>
 
-        <div class="sender-section">
-            <h3>Send to Device</h3>
-            <p id="status">Status: Disconnected</p>
-            
+        <div class="sender">
             <input type="text" id="pcID" placeholder="Enter Device ID">
-            <button class="btn win" style="width:100%; border:none; cursor:pointer;" onclick="connectToPC()">Connect to Device</button>
-
-            <div class="file-drop" onclick="document.getElementById('fileInput').click()">
-                <span id="file-name">Tap to select file</span>
-                <input type="file" id="fileInput" hidden onchange="showFileName()">
+            <div class="file-zone" onclick="document.getElementById('fileInput').click()">
+                <span id="file-name">Click to select file</span>
+                <input type="file" id="fileInput" hidden onchange="document.getElementById('file-name').innerText = this.files[0].name">
             </div>
-            
-            <button id="send-btn" onclick="sendFile()">Send Now</button>
+            <button id="send-btn" onclick="send()">Send to PC</button>
         </div>
     </div>
 
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script>
-        let peer = new Peer();
-        let conn = null;
-
-        function showFileName() {
-            const file = document.getElementById('fileInput').files[0];
-            if (file) document.getElementById('file-name').innerText = "Ready: " + file.name;
-        }
-
-        function connectToPC() {
+        const peer = new Peer();
+        function send() {
             const id = document.getElementById('pcID').value;
-            if (!id) return alert("Enter a Device ID!");
-            document.getElementById('status').innerText = "Connecting...";
-            conn = peer.connect(id);
+            const file = document.getElementById('fileInput').files[0];
+            if (!id || !file) return alert("Missing ID or File");
+            
+            const conn = peer.connect(id);
             conn.on('open', () => {
-                document.getElementById('status').innerText = "Connected ✅";
-                document.getElementById('status').style.color = "#10b981";
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    conn.send({ file: e.target.result, name: file.name, type: file.type });
+                    alert("Sent!");
+                };
+                reader.readAsArrayBuffer(file);
             });
-        }
-
-        function sendFile() {
-            const fileInput = document.getElementById('fileInput');
-            const file = fileInput.files[0];
-            if (!conn || !conn.open) return alert("Connect first!");
-            if (!file) return alert("Select a file!");
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                conn.send({
-                    file: e.target.result,
-                    name: file.name,
-                    type: file.type,
-                    size: file.size
-                });
-                alert("Sent!");
-            };
-            reader.readAsArrayBuffer(file);
         }
     </script>
 </body>
