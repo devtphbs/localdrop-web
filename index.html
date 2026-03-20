@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LocalDrop | Fast File Sharing</title>
+    <title>LocalDrop | Cross-Platform Sharing</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -11,9 +11,10 @@
             --primary: #3b82f6;
             --success: #10b981;
             --text: #f8fafc;
+            --border: #334155;
         }
         body { 
-            font-family: 'Inter', sans-serif; 
+            font-family: 'Inter', -apple-system, sans-serif; 
             background: var(--bg); 
             color: var(--text); 
             margin: 0; 
@@ -24,84 +25,98 @@
         }
         .container {
             background: var(--card);
-            padding: 2rem;
-            border-radius: 1rem;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
             width: 100%;
-            max-width: 450px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            max-width: 480px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
             text-align: center;
+            border: 1px solid var(--border);
         }
-        .download-section {
+        h1 { margin-top: 0; font-size: 2rem; }
+        .download-box {
             margin-bottom: 2rem;
             padding-bottom: 1.5rem;
-            border-bottom: 1px solid #334155;
+            border-bottom: 1px solid var(--border);
         }
         .btn {
             display: block;
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 8px;
+            padding: 14px;
+            margin: 10px 0;
+            border-radius: 10px;
             text-decoration: none;
-            font-weight: bold;
-            transition: transform 0.2s;
+            font-weight: 700;
+            transition: all 0.2s;
+            font-size: 0.95rem;
         }
-        .btn:active { transform: scale(0.98); }
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
         .win { background: var(--primary); color: white; }
-        .mac { background: #e2e8f0; color: #0f172a; }
-        .linux { background: #334155; color: white; }
+        .mac { background: #f8fafc; color: #0f172a; }
+        .linux { background: #475569; color: white; }
         
+        .sender-section { margin-top: 1rem; }
         input[type="text"] {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background: #0f172a;
-            border: 1px solid #334155;
+            border: 1px solid var(--border);
             color: white;
-            border-radius: 8px;
+            border-radius: 10px;
             margin: 10px 0;
+            box-sizing: border-box;
+            font-family: monospace;
         }
-        .file-box {
-            border: 2px dashed #475569;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 15px 0;
+        .file-drop {
+            border: 2px dashed var(--border);
+            padding: 30px;
+            border-radius: 12px;
+            margin: 20px 0;
             cursor: pointer;
+            transition: border-color 0.3s;
         }
+        .file-drop:hover { border-color: var(--primary); }
+        
         #send-btn {
             background: var(--success);
             color: white;
             border: none;
             width: 100%;
-            padding: 15px;
-            font-size: 1rem;
-            font-weight: bold;
-            border-radius: 8px;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            border-radius: 10px;
             cursor: pointer;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
         }
-        #status { font-size: 0.85rem; color: #94a3b8; margin-bottom: 10px; }
+        #status { font-size: 0.9rem; color: #94a3b8; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="download-section">
-            <h2>Get the Desktop App</h2>
+        <div class="download-box">
+            <h1>LocalDrop PC</h1>
+            <p style="color: #94a3b8; margin-bottom: 20px;">Download the desktop app to start receiving files</p>
+            
             <a href="https://github.com/devtphbs/localdrop-pc/releases/download/v1.1.5/LocalDrop-Setup-1.1.5.exe" class="btn win">Download for Windows (.exe)</a>
-            <a href="https://github.com/devtphbs/localdrop-pc/releases/download/v1.1.5/LocalDrop-1.1.5-arm64.dmg" class="btn mac">Download for Mac (.dmg)</a>
+            <a href="https://github.com/devtphbs/localdrop-pc/releases/download/v1.1.5/LocalDrop-1.1.5-arm64.dmg" class="btn mac">Download for Mac (Apple Silicon)</a>
             <a href="https://github.com/devtphbs/localdrop-pc/releases/download/v1.1.5/LocalDrop-1.1.5.AppImage" class="btn linux">Download for Linux (.AppImage)</a>
         </div>
 
-        <h2>Send Files to PC</h2>
-        <p id="status">Status: Not Connected</p>
-        
-        <input type="text" id="pcID" placeholder="Enter PC ID (e.g. localdrop-pc-1234)">
-        <button class="btn win" style="width:100%; border:none; cursor:pointer;" onclick="connectToPC()">Connect to PC</button>
+        <div class="sender-section">
+            <h3>Send to Device</h3>
+            <p id="status">Status: Disconnected</p>
+            
+            <input type="text" id="pcID" placeholder="Enter Device ID (e.g. localdrop-pc-250)">
+            <button class="btn win" style="width:100%; border:none; cursor:pointer;" onclick="connectToPC()">Connect to Device</button>
 
-        <div class="file-box" onclick="document.getElementById('fileInput').click()">
-            <span id="file-name">Tap to select a file</span>
-            <input type="file" id="fileInput" hidden onchange="showFileName()">
+            <div class="file-drop" onclick="document.getElementById('fileInput').click()">
+                <span id="file-name">Tap to select or drop file</span>
+                <input type="file" id="fileInput" hidden onchange="showFileName()">
+            </div>
+            
+            <button id="send-btn" onclick="sendFile()">Send Now</button>
         </div>
-        
-        <button id="send-btn" onclick="sendFile()">Send to Desktop</button>
     </div>
 
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -111,23 +126,24 @@
 
         function showFileName() {
             const file = document.getElementById('fileInput').files[0];
-            if (file) document.getElementById('file-name').innerText = "Selected: " + file.name;
+            if (file) document.getElementById('file-name').innerText = "Ready: " + file.name;
         }
 
         function connectToPC() {
             const id = document.getElementById('pcID').value;
-            if (!id) return alert("Enter PC ID first!");
+            if (!id) return alert("Please enter a Device ID!");
 
             document.getElementById('status').innerText = "Connecting...";
             conn = peer.connect(id);
 
             conn.on('open', () => {
-                document.getElementById('status').innerText = "Connected to PC ✅";
+                document.getElementById('status').innerText = "Connected ✅";
                 document.getElementById('status').style.color = "#10b981";
             });
 
             conn.on('error', () => {
-                alert("Connection failed. Is the PC app open?");
+                document.getElementById('status').innerText = "Connection Failed ❌";
+                alert("Could not find that device. Is the app open?");
             });
         }
 
@@ -135,21 +151,20 @@
             const fileInput = document.getElementById('fileInput');
             const file = fileInput.files[0];
 
-            if (!conn || !conn.open) return alert("Connect to PC first!");
-            if (!file) return alert("Select a file!");
+            if (!conn || !conn.open) return alert("Connect to a device first!");
+            if (!file) return alert("Please select a file to send!");
 
-            document.getElementById('status').innerText = "Sending file...";
+            document.getElementById('status').innerText = "Sending...";
 
             const reader = new FileReader();
             reader.onload = function(e) {
-                // Sending as ArrayBuffer (Binary)
                 conn.send({
                     file: e.target.result,
                     name: file.name,
                     type: file.type,
                     size: file.size
                 });
-                alert("File sent successfully!");
+                alert("File sent!");
                 document.getElementById('status').innerText = "Connected ✅";
             };
             reader.readAsArrayBuffer(file);
